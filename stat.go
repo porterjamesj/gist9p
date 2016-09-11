@@ -3,76 +3,21 @@ package gist9p
 import (
 	"errors"
 	"github.com/docker/go-p9p"
-	"github.com/google/go-github/github"
 	"golang.org/x/net/context"
 	"log"
 	"os"
 	"strings"
-	"time"
 )
-
-func statRoot() p9p.Dir {
-	// TODO think of something more principled to do about access
-	// time?
-	now := time.Now()
-	var dir = p9p.Dir{
-		Mode:       0755 | p9p.DMDIR,
-		AccessTime: now,
-		ModTime:    now,
-		Length:     0,
-	}
-	return dir
-}
-
-func statUser(user *github.User, gists []*github.Gist) p9p.Dir {
-	// user updated time is most recent updated time of all the user's
-	// gists. TODO using this as access time to is a bit bogo, should
-	// maybe track this internally
-	var times = make([]time.Time, 1)
-	times[0] = user.CreatedAt.Time
-	for _, gist := range gists {
-		times = append(times, *gist.UpdatedAt)
-	}
-	modTime := maxTime(times)
-	var dir = p9p.Dir{
-		Mode:       0755 | p9p.DMDIR,
-		AccessTime: modTime,
-		ModTime:    modTime,
-		// per https://swtch.com/plan9port/man/man9/stat.html,
-		// "Directories and most files representing devices have a
-		// conventional length of 0. "
-		Length: 0,
-	}
-	return dir
-}
 
 func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 	log.Println("stating fid", fid)
-	if file, ok := gs.store.getFid(fid); ok {
-		components := strings.Split(file.path, "/")[1:]
+	if file, ok := gs.fidMap[fid]; ok {
+		components := strings.Split(path(file), "/")[1:]
 		components = removeEmptyStrings(components)
-		log.Println(fid, file, file.path)
-		var dir p9p.Dir
-		var err error = nil
-		switch len(components) {
-		case 0:
-			dir = statRoot()
-		case 1:
-			uname := components[0]
-			// TODO handle errors
-			user, _, _ := gs.client.Users.Get(uname)
-			if user == nil {
-				err = errors.New("user does not exist")
-			} else {
-				gists, _, _ := gs.client.Gists.List(uname, nil)
-				dir = statUser(user, gists)
-			}
-		default:
-			dir = p9p.Dir{}
-			err = errors.New("cant stat that yet")
-		}
-		dir.Qid = file.qid
-		dir.Name = file.path
+		log.Println(fid, file, path(file))
+		dir, err := file.stat()
+		dir.Qid = file.getQid()
+		dir.Name = path(file)
 		dir.Type = 0
 		dir.Dev = 0
 		// TODO move user up to GistSession so we only get it once

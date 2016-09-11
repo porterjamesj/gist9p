@@ -5,52 +5,18 @@ import (
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2"
-	"hash/fnv"
 	"log"
 )
 
-func githubClientFromToken(token string) *github.Client {
-	// https://godoc.org/github.com/google/go-github/github#hdr-Authentication
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	tc := oauth2.NewClient(oauth2.NoContext, ts)
-	return github.NewClient(tc)
-}
-
-func hashPath(s string) uint64 {
-	hash := fnv.New64()
-	hash.Write([]byte(s))
-	return hash.Sum64()
-}
-
-// TODO move this into file store
-func getRootFile() File {
-	var path = "/"
-	var qid = p9p.Qid{
-		Type:    p9p.QTDIR,
-		Version: 0,
-		Path:    hashPath(path),
-	}
-	return File{
-		qid:  qid,
-		path: path,
-	}
-}
-
 type GistSession struct {
 	client *github.Client
-	// TODO pull this out into a "middleware" session, that wraps
-	// an inner session and does fid / qid mapping bookkeeping by
-	// keeping a map from fid -> qid, and passing the relevant qid
-	// into requests via the context k/v store. is this a
-	// reasonable / idiomatic usage of context?
-	store *FileStore
+	fidMap map[p9p.Fid]FileNode
 }
 
 func NewGistSession(token string) *GistSession {
 	var gs GistSession
 	gs.client = githubClientFromToken(token)
-	gs.store = NewFileStore()
+	gs.fidMap = make(map[p9p.Fid]FileNode)
 	return &gs
 }
 
@@ -60,17 +26,19 @@ func (gs *GistSession) Auth(ctx context.Context, afid p9p.Fid, uname, aname stri
 
 func (gs *GistSession) Attach(ctx context.Context, fid, afid p9p.Fid, uname, aname string) (p9p.Qid, error) {
 	log.Println("attaching")
-	rootFile := getRootFile()
-	gs.store.addFile(rootFile, fid)
-	return rootFile.qid, nil
+	rootNode := NewRootNode(gs.client)
+	gs.fidMap[fid] = rootNode
+	return rootNode.qid, nil
 }
 
 func (gs *GistSession) Clunk(ctx context.Context, fid p9p.Fid) error {
-	// TODO do something about the pathMap also? I'm not confident
-	// that there won't be probelms down the line due to them being
-	// out of sync like this
-	delete(gs.store.fidMap, fid)
-	return nil
+	if file, ok := gs.fidMap[fid]; ok {
+		delete(gs.fidMap, fid)
+		err := clunk(file)
+		return err
+	} else {
+		return errors.New("don't know that fid")
+	}
 }
 
 func (gs *GistSession) Remove(ctx context.Context, fid p9p.Fid) error {

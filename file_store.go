@@ -7,6 +7,7 @@ import (
 type File struct {
 	qid  p9p.Qid
 	path string
+	open bool
 }
 
 func NewFileOfType(path string, qtype p9p.QType) File {
@@ -17,6 +18,7 @@ func NewFileOfType(path string, qtype p9p.QType) File {
 			Path:    hashPath(path),
 		},
 		path: path,
+		open: false,
 	}
 }
 

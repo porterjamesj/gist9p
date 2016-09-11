@@ -31,6 +31,7 @@ func (gs *GistSession) Walk(ctx context.Context, fid p9p.Fid, newfid p9p.Fid, na
 					file, ok = gs.store.getPath(userPath)
 					if ok {
 						qids = append(qids, file.qid)
+						gs.store.addFile(file, newfid)
 					} else {
 						userDir := NewDir(userPath)
 						gs.store.addFile(userDir, newfid)

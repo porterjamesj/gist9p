@@ -53,7 +53,7 @@ func statUser(file File, user *github.User, gists []*github.Gist) p9p.Dir {
 }
 
 func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
-	log.Println("stating")
+	log.Println("stating fid", fid)
 	// TODO move user up to GistSession so we only get it once
 	user := os.Getenv("USER")
 	if file, ok := gs.store.getFid(fid); ok {

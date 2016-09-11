@@ -11,23 +11,20 @@ import (
 	"time"
 )
 
-func statRoot(file File) p9p.Dir {
+func statRoot() p9p.Dir {
 	// TODO think of something more principled to do about access
 	// time?
 	now := time.Now()
 	var dir = p9p.Dir{
-		Type:       0,
-		Dev:        0,
-		Qid:        file.qid,
 		Mode:       0755 | p9p.DMDIR,
 		AccessTime: now,
 		ModTime:    now,
 		Length:     0,
-		Name:       file.path}
+	}
 	return dir
 }
 
-func statUser(file File, user *github.User, gists []*github.Gist) p9p.Dir {
+func statUser(user *github.User, gists []*github.Gist) p9p.Dir {
 	// user updated time is most recent updated time of all the user's
 	// gists. TODO using this as access time to is a bit bogo, should
 	// maybe track this internally
@@ -38,9 +35,6 @@ func statUser(file File, user *github.User, gists []*github.Gist) p9p.Dir {
 	}
 	modTime := maxTime(times)
 	var dir = p9p.Dir{
-		Type:       0,
-		Dev:        0,
-		Qid:        file.qid,
 		Mode:       0755 | p9p.DMDIR,
 		AccessTime: modTime,
 		ModTime:    modTime,
@@ -48,7 +42,7 @@ func statUser(file File, user *github.User, gists []*github.Gist) p9p.Dir {
 		// "Directories and most files representing devices have a
 		// conventional length of 0. "
 		Length: 0,
-		Name:   file.path}
+	}
 	return dir
 }
 
@@ -64,17 +58,21 @@ func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 		var err error = nil
 		switch len(components) {
 		case 0:
-			dir = statRoot(file)
+			dir = statRoot()
 		case 1:
 			uname := components[0]
 			// TODO handle errors
 			user, _, _ := gs.client.Users.Get(uname)
 			gists, _, _ := gs.client.Gists.List(uname, nil)
-			dir = statUser(file, user, gists)
+			dir = statUser(user, gists)
 		default:
 			dir = p9p.Dir{}
 			err = errors.New("cant stat that yet")
 		}
+		dir.Qid = file.qid
+		dir.Name = file.path
+		dir.Type = 0
+		dir.Dev = 0
 		dir.MUID = user
 		dir.UID = user
 		dir.GID = user

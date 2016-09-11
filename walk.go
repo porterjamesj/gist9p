@@ -78,7 +78,7 @@ func (gs *GistSession) Walk(ctx context.Context, fid p9p.Fid, newfid p9p.Fid, na
 		var err error
 		if file.path == "/" {
 			qids, err = gs.rootWalk(file, names, newfid)
-		} else if match, _ := regexp.MatchString("^/[^/]*$", file.path); match {
+		} else if match, _ := regexp.MatchString(`^/[A-Za-z0-9\-]*$`, file.path); match {
 			// walking from a user
 			qids, err = gs.userWalk(file, names, newfid)
 		} else {

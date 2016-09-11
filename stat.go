@@ -48,8 +48,6 @@ func statUser(user *github.User, gists []*github.Gist) p9p.Dir {
 
 func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 	log.Println("stating fid", fid)
-	// TODO move user up to GistSession so we only get it once
-	user := os.Getenv("USER")
 	if file, ok := gs.store.getFid(fid); ok {
 		components := strings.Split(file.path, "/")[1:]
 		components = removeEmptyStrings(components)
@@ -63,8 +61,12 @@ func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 			uname := components[0]
 			// TODO handle errors
 			user, _, _ := gs.client.Users.Get(uname)
-			gists, _, _ := gs.client.Gists.List(uname, nil)
-			dir = statUser(user, gists)
+			if user == nil {
+				err = errors.New("user does not exist")
+			} else {
+				gists, _, _ := gs.client.Gists.List(uname, nil)
+				dir = statUser(user, gists)
+			}
 		default:
 			dir = p9p.Dir{}
 			err = errors.New("cant stat that yet")
@@ -73,6 +75,8 @@ func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 		dir.Name = file.path
 		dir.Type = 0
 		dir.Dev = 0
+		// TODO move user up to GistSession so we only get it once
+		user := os.Getenv("USER")
 		dir.MUID = user
 		dir.UID = user
 		dir.GID = user

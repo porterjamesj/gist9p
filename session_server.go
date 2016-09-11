@@ -66,6 +66,10 @@ func (gs *GistSession) Attach(ctx context.Context, fid, afid p9p.Fid, uname, ana
 }
 
 func (gs *GistSession) Clunk(ctx context.Context, fid p9p.Fid) error {
+	// TODO do something about the pathMap also? I'm not confident
+	// that there won't be probelms down the line due to them being
+	// out of sync like this
+	delete(gs.store.fidMap, fid)
 	return nil
 }
 

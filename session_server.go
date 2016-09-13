@@ -10,13 +10,13 @@ import (
 
 type GistSession struct {
 	client *github.Client
-	fidMap map[p9p.Fid]FileNode
+	fidMap map[p9p.Fid]Node
 }
 
 func NewGistSession(token string) *GistSession {
 	var gs GistSession
 	gs.client = githubClientFromToken(token)
-	gs.fidMap = make(map[p9p.Fid]FileNode)
+	gs.fidMap = make(map[p9p.Fid]Node)
 	return &gs
 }
 
@@ -32,6 +32,7 @@ func (gs *GistSession) Attach(ctx context.Context, fid, afid p9p.Fid, uname, ana
 }
 
 func (gs *GistSession) Clunk(ctx context.Context, fid p9p.Fid) error {
+	log.Println("clunking fid", fid)
 	if file, ok := gs.fidMap[fid]; ok {
 		delete(gs.fidMap, fid)
 		err := clunk(file)

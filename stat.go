@@ -9,12 +9,12 @@ import (
 	"strings"
 )
 
-func statFile(file FileNode) (p9p.Dir, error) {
-	components := strings.Split(path(file), "/")[1:]
+func statFile(node Node) (p9p.Dir, error) {
+	components := strings.Split(path(node), "/")[1:]
 	components = removeEmptyStrings(components)
-	dir, err := file.Stat()
-	dir.Qid = file.Qid()
-	dir.Name = file.PathComponent()
+	dir, err := node.Stat()
+	dir.Qid = node.Qid()
+	dir.Name = node.PathComponent()
 	dir.Type = 0
 	dir.Dev = 0
 	// TODO move user up to GistSession so we only get it once

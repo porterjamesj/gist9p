@@ -7,16 +7,16 @@ import (
 )
 
 type RootNode struct {
-	File
+	BaseNode
 	users  map[string]*UserNode
 	client *github.Client
 }
 
 func NewRootNode(client *github.Client) *RootNode {
 	var node RootNode
-	node.File = NewDir(path(&node))
 	node.client = client
 	node.users = make(map[string]*UserNode)
+	node.BaseNode = NewDir(path(&node))
 	return &node
 }
 
@@ -24,12 +24,12 @@ func (node *RootNode) PathComponent() string {
 	return "/"
 }
 
-func (node *RootNode) Parent() FileNode {
+func (node *RootNode) Parent() Node {
 	// the nodenode's parent is itself
 	return node
 }
 
-func (node *RootNode) Child(name string) (FileNode, error) {
+func (node *RootNode) Child(name string) (Node, error) {
 	// children of the root node are UserNodes
 	if child, ok := node.users[name]; ok {
 		return child, nil
@@ -44,10 +44,10 @@ func (node *RootNode) Child(name string) (FileNode, error) {
 	}
 }
 
-func (node *RootNode) Children() ([]FileNode, error) {
-	var children []FileNode
+func (node *RootNode) Children() ([]Node, error) {
+	var children []Node
 	for _, user := range node.users {
-		children = append(children, FileNode(user))
+		children = append(children, Node(user))
 	}
 	return children, nil
 }

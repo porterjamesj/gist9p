@@ -8,21 +8,23 @@ import (
 )
 
 type UserNode struct {
-	File
+	BaseNode
 	root   *RootNode
 	user   *github.User
+	gists  *GistNode
 	client *github.Client
 }
 
 func NewUserNode(root *RootNode, user *github.User) *UserNode {
 	var userNode UserNode
+	userNode.root = root
 	userNode.client = root.client
 	userNode.user = user
-	userNode.File = NewDir(path(&userNode))
+	userNode.BaseNode = NewDir(path(&userNode))
 	return &userNode
 }
 
-func (node *UserNode) Parent() FileNode {
+func (node *UserNode) Parent() Node {
 	return node.root
 }
 
@@ -30,13 +32,22 @@ func (node *UserNode) PathComponent() string {
 	return *node.user.Login
 }
 
-func (node *UserNode) Child(name string) (FileNode, error) {
+func (node *UserNode) Child(name string) (Node, error) {
 	return nil, errors.New("can't get children of users yet")
 }
 
-func (node *UserNode) Children() ([]FileNode, error) {
-	// TODO implement this, children are individual gists
-	return nil, errors.New("can't get children of users yet")
+func (node *UserNode) Children() ([]Node, error) {
+	gists, _, err := node.client.Gists.List(*node.user.Login, nil)
+	if err != nil {
+		return nil, err
+	}
+	var children []Node
+	for _, gist := range gists {
+		// TODO these names are hellishly confusing :/
+		gistNode := NewGistNode(node, gist)
+		children = append(children, Node(gistNode))
+	}
+	return children, nil
 }
 
 func (node *UserNode) Stat() (p9p.Dir, error) {

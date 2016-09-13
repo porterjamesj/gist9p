@@ -56,3 +56,11 @@ func encodeDirs(dirs []p9p.Dir) ([]byte, error) {
 	}
 	return data, nil
 }
+
+// stil don't quite understand why this isn't the stdlib
+func max(x int, y int) int {
+	if x > y {
+		return x
+	}
+	return y
+}

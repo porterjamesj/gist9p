@@ -1,6 +1,7 @@
 package gist9p
 
 import (
+	"errors"
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
 	"time"
@@ -8,30 +9,30 @@ import (
 
 type RootNode struct {
 	File
-	children map[string]*UserNode
-	client   *github.Client
+	users  map[string]*UserNode
+	client *github.Client
 }
 
 func NewRootNode(client *github.Client) *RootNode {
 	var node RootNode
 	node.File = NewDir(path(&node))
 	node.client = client
-	node.children = make(map[string]*UserNode)
+	node.users = make(map[string]*UserNode)
 	return &node
 }
 
-func (node *RootNode) pathComponent() string {
+func (node *RootNode) PathComponent() string {
 	return "/"
 }
 
-func (node *RootNode) parent() FileNode {
+func (node *RootNode) Parent() FileNode {
 	// the nodenode's parent is itself
 	return node
 }
 
-func (node *RootNode) child(name string) (FileNode, error) {
+func (node *RootNode) Child(name string) (FileNode, error) {
 	// children of the root node are UserNodes
-	if child, ok := node.children[name]; ok {
+	if child, ok := node.users[name]; ok {
 		return child, nil
 	} else {
 		user, _, err := node.client.Users.Get(name)
@@ -39,12 +40,16 @@ func (node *RootNode) child(name string) (FileNode, error) {
 			return nil, err
 		}
 		userNode := NewUserNode(node, user)
-		node.children[name] = userNode
+		node.users[name] = userNode
 		return userNode, nil
 	}
 }
 
-func (node *RootNode) stat() (p9p.Dir, error) {
+func (node *RootNode) Children() ([]FileNode, error) {
+	return nil, errors.New("can't list all children of root")
+}
+
+func (node *RootNode) Stat() (p9p.Dir, error) {
 	now := time.Now()
 	var dir = p9p.Dir{
 		Mode:       0755 | p9p.DMDIR,

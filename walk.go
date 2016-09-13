@@ -22,9 +22,9 @@ func (gs *GistSession) Walk(ctx context.Context, fid p9p.Fid, newfid p9p.Fid, na
 			if name == "." {
 				// curr remains the same
 			} else if name == ".." {
-				curr = curr.parent()
+				curr = curr.Parent()
 			} else {
-				curr, err = curr.child(name)
+				curr, err = curr.Child(name)
 				if err != nil {
 					// TODO do we return the qids that *have* been
 					// successfully walked? or do we return an empty
@@ -32,7 +32,7 @@ func (gs *GistSession) Walk(ctx context.Context, fid p9p.Fid, newfid p9p.Fid, na
 					break
 				}
 			}
-			qids = append(qids, curr.getQid())
+			qids = append(qids, curr.Qid())
 		}
 		gs.fidMap[newfid] = curr
 		return qids, err

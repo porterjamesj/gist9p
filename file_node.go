@@ -10,34 +10,35 @@ type File struct {
 	open bool
 }
 
-func (file *File) getQid() p9p.Qid {
+func (file *File) Qid() p9p.Qid {
 	return file.qid
 }
 
-func (file *File) isOpen() bool {
+func (file *File) Open() bool {
 	return file.open
 }
 
-func (file *File) setOpen(value bool) {
+func (file *File) SetOpen(value bool) {
 	file.open = value
 }
 
 type FileNode interface {
-	getQid() p9p.Qid
-	isOpen() bool
-	setOpen(bool)
-	pathComponent() string
-	parent() FileNode
-	child(name string) (FileNode, error)
-	stat() (p9p.Dir, error)
+	Qid() p9p.Qid
+	Open() bool
+	SetOpen(bool)
+	PathComponent() string
+	Parent() FileNode
+	Child(name string) (FileNode, error)
+	Children() ([]FileNode, error)
+	Stat() (p9p.Dir, error)
 }
 
 func path(file FileNode) string {
-	parent := file.parent()
+	parent := file.Parent()
 	if parent == file {
-		return file.pathComponent()
+		return file.PathComponent()
 	} else {
-		return path(file.parent()) + "/" + file.pathComponent()
+		return path(file.Parent()) + "/" + file.PathComponent()
 	}
 }
 
@@ -46,17 +47,17 @@ const IOUNIT uint32 = 0
 func open(file FileNode, mode p9p.Flag) error {
 	// TODO verify that mode is sensible . . . this should probably
 	// become a FileNode method
-	if file.isOpen() {
+	if file.Open() {
 		return errors.New("file already open")
 	} else {
-		file.setOpen(true)
+		file.SetOpen(true)
 		return nil
 	}
 }
 
 func clunk(file FileNode) error {
-	if file.isOpen() {
-		file.setOpen(false)
+	if file.Open() {
+		file.SetOpen(false)
 		return nil
 	} else {
 		return errors.New("file not open")

@@ -15,8 +15,8 @@ func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 		components := strings.Split(path(file), "/")[1:]
 		components = removeEmptyStrings(components)
 		log.Println(fid, file, path(file))
-		dir, err := file.stat()
-		dir.Qid = file.getQid()
+		dir, err := file.Stat()
+		dir.Qid = file.Qid()
 		dir.Name = path(file)
 		dir.Type = 0
 		dir.Dev = 0

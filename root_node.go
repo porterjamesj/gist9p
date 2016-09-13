@@ -13,38 +13,38 @@ type RootNode struct {
 }
 
 func NewRootNode(client *github.Client) *RootNode {
-	var root RootNode
-	root.File = NewDir(path(&root))
-	root.client = client
-	root.children = make(map[string]*UserNode)
-	return &root
+	var node RootNode
+	node.File = NewDir(path(&node))
+	node.client = client
+	node.children = make(map[string]*UserNode)
+	return &node
 }
 
-func (root *RootNode) pathComponent() string {
+func (node *RootNode) pathComponent() string {
 	return "/"
 }
 
-func (root *RootNode) parent() FileNode {
-	// the rootnode's parent is itself
-	return root
+func (node *RootNode) parent() FileNode {
+	// the nodenode's parent is itself
+	return node
 }
 
-func (root *RootNode) child(name string) (FileNode, error) {
+func (node *RootNode) child(name string) (FileNode, error) {
 	// children of the root node are UserNodes
-	if child, ok := root.children[name]; ok {
+	if child, ok := node.children[name]; ok {
 		return child, nil
 	} else {
-		user, _, err := root.client.Users.Get(name)
+		user, _, err := node.client.Users.Get(name)
 		if err != nil {
 			return nil, err
 		}
-		userNode := NewUserNode(root, user)
-		root.children[name] = userNode
+		userNode := NewUserNode(node, user)
+		node.children[name] = userNode
 		return userNode, nil
 	}
 }
 
-func (root *RootNode) stat() (p9p.Dir, error) {
+func (node *RootNode) stat() (p9p.Dir, error) {
 	now := time.Now()
 	var dir = p9p.Dir{
 		Mode:       0755 | p9p.DMDIR,

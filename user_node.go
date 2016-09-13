@@ -22,24 +22,24 @@ func NewUserNode(root *RootNode, user *github.User) *UserNode {
 	return &userNode
 }
 
-func (user *UserNode) parent() FileNode {
-	return user.root
+func (node *UserNode) parent() FileNode {
+	return node.root
 }
 
-func (user *UserNode) pathComponent() string {
-	return *user.user.Login
+func (node *UserNode) pathComponent() string {
+	return *node.user.Login
 }
 
-func (user *UserNode) child(name string) (FileNode, error) {
+func (node *UserNode) child(name string) (FileNode, error) {
 	return nil, errors.New("can't get children of users yet")
 }
 
-func (user *UserNode) stat() (p9p.Dir, error) {
+func (node *UserNode) stat() (p9p.Dir, error) {
 	var times = make([]time.Time, 1)
-	times[0] = user.user.CreatedAt.Time
+	times[0] = node.user.CreatedAt.Time
 	// TODO pagiantion, guarentee that we list all gists
 	// also maybe do this by filling our list of children?
-	gists, _, err := user.client.Gists.List(*user.user.Login, nil)
+	gists, _, err := node.client.Gists.List(*node.user.Login, nil)
 	if err != nil {
 		return p9p.Dir{}, err
 	}

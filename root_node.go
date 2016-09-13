@@ -1,7 +1,6 @@
 package gist9p
 
 import (
-	"errors"
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
 	"time"
@@ -46,7 +45,11 @@ func (node *RootNode) Child(name string) (FileNode, error) {
 }
 
 func (node *RootNode) Children() ([]FileNode, error) {
-	return nil, errors.New("can't list all children of root")
+	var children []FileNode
+	for _, user := range node.users {
+		children = append(children, FileNode(user))
+	}
+	return children, nil
 }
 
 func (node *RootNode) Stat() (p9p.Dir, error) {

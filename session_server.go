@@ -45,10 +45,6 @@ func (gs *GistSession) Remove(ctx context.Context, fid p9p.Fid) error {
 	return errors.New("cant remove yet")
 }
 
-func (gs *GistSession) Read(ctx context.Context, fid p9p.Fid, p []byte, offset int64) (int, error) {
-	return 0, errors.New("cant read yet")
-}
-
 func (gs *GistSession) Write(ctx context.Context, fid p9p.Fid, p []byte, offset int64) (int, error) {
 	return 0, errors.New("cant write yet")
 }

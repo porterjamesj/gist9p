@@ -1,9 +1,12 @@
 package gist9p
 
 import (
+	"bytes"
+	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 	"hash/fnv"
+	"io/ioutil"
 	"time"
 )
 
@@ -39,4 +42,17 @@ func maxTime(times []time.Time) time.Time {
 		}
 	}
 	return max
+}
+
+func encodeDirs(dirs []p9p.Dir) ([]byte, error) {
+	codec := p9p.NewCodec()
+	var buf bytes.Buffer
+	for _, dir := range dirs {
+		p9p.EncodeDir(codec, &buf, &dir)
+	}
+	data, err := ioutil.ReadAll(&buf)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
 }

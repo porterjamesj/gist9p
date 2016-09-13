@@ -38,7 +38,9 @@ func path(file FileNode) string {
 	if parent == file {
 		return file.PathComponent()
 	} else {
-		return path(file.Parent()) + "/" + file.PathComponent()
+		p := path(parent) + file.PathComponent()
+		// TODO add a slash to the end if it's a directory
+		return p
 	}
 }
 

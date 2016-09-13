@@ -2,7 +2,6 @@ package gist9p
 
 import (
 	"errors"
-	"fmt"
 	"github.com/docker/go-p9p"
 	"golang.org/x/net/context"
 	"log"
@@ -10,9 +9,7 @@ import (
 
 func (gs *GistSession) Walk(ctx context.Context, fid p9p.Fid, newfid p9p.Fid, names ...string) ([]p9p.Qid, error) {
 	log.Println("walking", fid, newfid, names)
-	fmt.Printf("%q\n", names)
 	names = removeEmptyStrings(names)
-	fmt.Printf("%q\n", names)
 	file, ok := gs.fidMap[fid]
 	if ok {
 		var qids []p9p.Qid

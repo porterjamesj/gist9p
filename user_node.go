@@ -33,7 +33,17 @@ func (node *UserNode) PathComponent() string {
 }
 
 func (node *UserNode) Child(name string) (Node, error) {
-	return nil, errors.New("can't get children of users yet")
+	gists, _, err := node.client.Gists.List(*node.user.Login, nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, gist := range gists {
+		if *gist.ID == name {
+			return Node(NewGistNode(node, gist)), nil
+		}
+	}
+	return nil, errors.New("gist not found")
+
 }
 
 func (node *UserNode) Children() ([]Node, error) {

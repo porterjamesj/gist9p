@@ -1,6 +1,7 @@
 package gist9p
 
 import (
+	"errors"
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
 )
@@ -23,6 +24,23 @@ func NewGistNode(user *UserNode, gist *github.Gist) *GistNode {
 
 func (node *GistNode) Parent() Node {
 	return node.user
+}
+
+func (node *GistNode) Child(name string) (Node, error) {
+	file, ok := node.gist.Files[github.GistFilename(name)]
+	if !ok {
+		return nil, errors.New("gist file not found")
+	}
+	return NewFileNode(node, &file), nil
+}
+
+func (node *GistNode) Children() ([]Node, error) {
+	var children []Node
+	for _, file := range node.gist.Files {
+		fileNode := NewFileNode(node, &file)
+		children = append(children, Node(fileNode))
+	}
+	return children, nil
 }
 
 func (node *GistNode) PathComponent() string {

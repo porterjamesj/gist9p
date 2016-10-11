@@ -39,7 +39,8 @@ func (node *UserNode) Child(name string) (Node, error) {
 	}
 	for _, gist := range gists {
 		if *gist.ID == name {
-			return Node(NewGistNode(node, gist)), nil
+			gistNode := NewGistNode(node, gist)
+			return Node(gistNode), nil
 		}
 	}
 	return nil, errors.New("gist not found")

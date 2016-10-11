@@ -14,6 +14,8 @@ type Node interface {
 	Child(name string) (Node, error)
 	Children() ([]Node, error)
 	Stat() (p9p.Dir, error)
+	// TODO should pass the context here eventually
+	Read([]byte, int64) (int, error)
 }
 
 type BaseNode struct {
@@ -47,6 +49,10 @@ func (node *BaseNode) Children() ([]Node, error) {
 
 func (node *BaseNode) Stat() (p9p.Dir, error) {
 	return p9p.Dir{}, errors.New("stat not implemented")
+}
+
+func (node *BaseNode) Read([]byte, int64) (int, error) {
+	return 0, errors.New("read not implemented")
 }
 
 func path(node Node) string {

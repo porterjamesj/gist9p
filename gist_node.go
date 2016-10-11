@@ -8,18 +8,33 @@ import (
 
 type GistNode struct {
 	BaseNode
-	user   *UserNode
-	gist   *github.Gist
-	client *github.Client
+	user        *UserNode
+	gist        *github.Gist
+	client      *github.Client
+	haveContent bool
 }
 
 func NewGistNode(user *UserNode, gist *github.Gist) *GistNode {
 	var gistNode GistNode
 	gistNode.user = user
-	gistNode.gist = gist
 	gistNode.client = user.client
+	gistNode.gist = gist
 	gistNode.BaseNode = NewDir(path(&gistNode))
+	gistNode.haveContent = false
 	return &gistNode
+}
+
+func (node *GistNode) fillContent() error {
+	if !node.haveContent {
+		var err error
+		node.gist, _, err = node.client.Gists.Get(*node.gist.ID)
+		if err == nil {
+			node.haveContent = true
+		}
+		return err
+	} else {
+		return nil
+	}
 }
 
 func (node *GistNode) Parent() Node {

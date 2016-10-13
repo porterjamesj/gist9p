@@ -46,10 +46,6 @@ func (gs *GistSession) Remove(ctx context.Context, fid p9p.Fid) error {
 	return errors.New("cant remove yet")
 }
 
-func (gs *GistSession) Write(ctx context.Context, fid p9p.Fid, p []byte, offset int64) (int, error) {
-	return 0, errors.New("cant write yet")
-}
-
 func (gs *GistSession) Create(ctx context.Context, parent p9p.Fid, name string, perm uint32, mode p9p.Flag) (p9p.Qid, uint32, error) {
 	return p9p.Qid{}, 0, errors.New("cant create yet")
 }

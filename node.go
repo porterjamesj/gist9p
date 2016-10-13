@@ -16,6 +16,7 @@ type Node interface {
 	Stat() (p9p.Dir, error)
 	// TODO should pass the context here eventually
 	Read([]byte, int64) (int, error)
+	Write([]byte, int64) (int, error)
 }
 
 type BaseNode struct {
@@ -53,6 +54,10 @@ func (node *BaseNode) Stat() (p9p.Dir, error) {
 
 func (node *BaseNode) Read([]byte, int64) (int, error) {
 	return 0, errors.New("read not implemented")
+}
+
+func (node *BaseNode) Write([]byte, int64) (int, error) {
+	return 0, errors.New("write not implemented")
 }
 
 func path(node Node) string {

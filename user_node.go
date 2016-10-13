@@ -48,6 +48,8 @@ func (node *UserNode) Child(name string) (Node, error) {
 }
 
 func (node *UserNode) Children() ([]Node, error) {
+	// TODO this isn't paginating correctly, loop to make sure we get
+	// everything
 	gists, _, err := node.client.Gists.List(*node.user.Login, nil)
 	if err != nil {
 		return nil, err

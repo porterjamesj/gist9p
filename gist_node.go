@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
+	"log"
 )
 
 type GistNode struct {
@@ -35,6 +36,17 @@ func (node *GistNode) fillContent() error {
 	} else {
 		return nil
 	}
+}
+
+func (node *GistNode) Sync() error {
+
+	gist, resp, err := node.client.Gists.Edit(*node.gist.ID, node.gist)
+	log.Println("sync PATCH resp code: ", resp.Status)
+	if err != nil {
+		return err
+	}
+	node.gist = gist
+	return nil
 }
 
 func (node *GistNode) Parent() Node {

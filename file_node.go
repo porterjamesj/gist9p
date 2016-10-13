@@ -3,21 +3,22 @@ package gist9p
 import (
 	"github.com/docker/go-p9p"
 	"github.com/google/go-github/github"
+	"log"
 )
 
 type FileNode struct {
 	BaseNode
-	gist        *GistNode
-	file        *github.GistFile
-	client      *github.Client
-	haveContent bool
+	gist    *GistNode
+	file    *github.GistFile
+	client  *github.Client
+	content []byte
 }
 
 func NewFileNode(gist *GistNode, file *github.GistFile) *FileNode {
 	var fileNode FileNode
 	fileNode.gist = gist
 	fileNode.file = file
-	fileNode.haveContent = false
+	fileNode.content = nil
 	fileNode.client = gist.client
 	fileNode.BaseNode = NewFile(path(&fileNode))
 	return &fileNode
@@ -46,14 +47,14 @@ func (node *FileNode) Stat() (p9p.Dir, error) {
 }
 
 func (node *FileNode) fillContent() error {
-	if !node.haveContent {
+	if node.content == nil {
 		err := node.gist.fillContent()
 		if err == nil {
 			// TODO jank, repetitive
 			fname := github.GistFilename(*node.file.Filename)
 			gf := node.gist.gist.Files[fname]
 			node.file = &gf
-			node.haveContent = true
+			node.content = []byte(*node.file.Content)
 		}
 		return err
 	} else {
@@ -73,4 +74,45 @@ func (node *FileNode) Read(p []byte, offset int64) (int, error) {
 		return 0, err
 	}
 	return copy(p, (*node.file.Content)[offset:]), nil
+}
+
+func (node *FileNode) Sync() error {
+	// TODO this is racy. naively I would use a lock to serialize this
+	// (so that editing a file / PATCHing up the result happens
+	// atomically), but I guess I could learn to "share by
+	// communicating" instead?
+	content := string(node.content)
+	node.file.Content = &content
+	// TODO gross gross gross this can be gotten rid of by just making
+	// this node store a reference to the github.Gist, rather than
+	// copying the github.Gistfile out of it. I somehow missed the
+	// fact that we were making a copy and not getting a pointer to
+	// the same underlying thing
+	fname := github.GistFilename(*node.file.Filename)
+	node.gist.gist.Files[fname] = *node.file
+	return node.gist.Sync()
+}
+
+func (node *FileNode) Write(p []byte, offset int64) (int, error) {
+	var err error
+	err = node.fillContent()
+	if err != nil {
+		log.Println("returning on error path")
+		return 0, err
+	}
+	written := copy(node.content[offset:], p)
+	if written != len(p) {
+		// need to grow the internal slice and add whatever's leftover
+		// TODO this feels wrong somehow, I think because I'm
+		// uncertain of what it's performance characteristics will be.
+		node.content = append(node.content, p[written:]...)
+	}
+	err = node.Sync()
+	if err != nil {
+		log.Println("returning on error path")
+		return 0, err
+	}
+	log.Println("returning on success path")
+	log.Println("bytes written:", written)
+	return written, nil
 }

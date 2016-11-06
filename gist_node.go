@@ -54,17 +54,18 @@ func (node *GistNode) Parent() Node {
 }
 
 func (node *GistNode) Child(name string) (Node, error) {
-	file, ok := node.gist.Files[github.GistFilename(name)]
+	gfname := github.GistFilename(name)
+	_, ok := node.gist.Files[gfname]
 	if !ok {
 		return nil, errors.New("gist file not found")
 	}
-	return NewFileNode(node, &file), nil
+	return NewFileNode(node, gfname), nil
 }
 
 func (node *GistNode) Children() ([]Node, error) {
 	var children []Node
 	for _, file := range node.gist.Files {
-		fileNode := NewFileNode(node, &file)
+		fileNode := NewFileNode(node, github.GistFilename(*file.Filename))
 		children = append(children, Node(fileNode))
 	}
 	return children, nil

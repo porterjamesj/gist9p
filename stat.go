@@ -36,6 +36,10 @@ func (gs *GistSession) Stat(ctx context.Context, fid p9p.Fid) (p9p.Dir, error) {
 }
 
 func (gs *GistSession) WStat(ctx context.Context, fid p9p.Fid, dir p9p.Dir) error {
-	log.Println("supposed new stat:", dir)
-	return nil
+	log.Println("wstating fid", fid)
+	if file, ok := gs.fidMap[fid]; ok {
+		return file.WStat(dir)
+	} else {
+		return errors.New("fid not found")
+	}
 }

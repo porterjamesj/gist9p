@@ -14,7 +14,13 @@ type Node interface {
 	Child(name string) (Node, error)
 	Children() ([]Node, error)
 	Stat() (p9p.Dir, error)
-	// TODO should pass the context here eventually
+	WStat(p9p.Dir) error
+	// TODO should pass the context here eventually thinking more
+	// aobut it, maybe not--as far as I can think the only thing we
+	// want to go with contexts is handle timeouts, so it might make
+	// sense to do the waiting on the context channel in the session
+	// implementation so that node implementations just don't have to
+	// worry about it
 	Read([]byte, int64) (int, error)
 	Write([]byte, int64) (int, error)
 }
@@ -50,6 +56,10 @@ func (node *BaseNode) Children() ([]Node, error) {
 
 func (node *BaseNode) Stat() (p9p.Dir, error) {
 	return p9p.Dir{}, errors.New("stat not implemented")
+}
+
+func (node *BaseNode) WStat(p9p.Dir) error {
+	return errors.New("wstat not implemented")
 }
 
 func (node *BaseNode) Read([]byte, int64) (int, error) {
